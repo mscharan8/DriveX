@@ -2,7 +2,7 @@ import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'login.dart';
-import 'storage.dart';
+// import 'storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 GoogleSignIn googleSignIn = GoogleSignIn(
@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.cyan),
       ),
       home: MyHomePage(title: 'Login Page'),
+      // home: MyHomePage(),
     );
   }
 }
@@ -39,7 +40,7 @@ class MyHomePage extends StatefulWidget {
 
   final String title;
   String coming = "";
-  final TextStorage storage = TextStorage();
+  // final TextStorage storage = TextStorage();
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -47,7 +48,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   // late Stream<DocumentSnapshot> _stream;
-  late Future <String> _coming;
+  // late Future <String> _coming;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _econtroller = TextEditingController(), _pcontroller = TextEditingController();
   String input = "";
@@ -56,13 +57,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _coming = widget.storage.writeText(_econtroller.text).then((bool success) {
+        /*_coming = widget.storage.writeText(_econtroller.text).then((bool success) {
           if (success) {
             return _econtroller.text;
           } else {
             return "";
           }
-        });
+        });*/
         String text = _econtroller.text;
         // _econtroller.clear();
         // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Saving...")));
@@ -88,10 +89,10 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     password = true;
-    _coming = widget.storage.readText();
+    // _coming = widget.storage.readText();
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -103,9 +104,11 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: Container(
-        height: 555.0,
-        width: 444.0,
-        color: Colors.grey[200],
+        height: 480.0,
+        width: 400.0,
+        margin: const EdgeInsets.all(10.0),
+        decoration: BoxDecoration(color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(20),),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: getBodyWidgetList(),
@@ -114,7 +117,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
   List<Widget> getBodyWidgetList() {
     return <Widget>[
       Form(
@@ -134,9 +136,23 @@ class _MyHomePageState extends State<MyHomePage> {
                   }
                   return const CircularProgressIndicator();
                 }),*/
-            const Text("DriveX",style:TextStyle(fontWeight: FontWeight.bold)),
-            const Align(alignment: Alignment.centerLeft, child: Text('E-mail:',style:TextStyle(fontWeight: FontWeight.bold))),
-            TextFormField(
+
+            Container(
+              margin: EdgeInsets.all(11), 
+              alignment:Alignment.topLeft,
+              child: const Text("Login",style:TextStyle(fontWeight: FontWeight.bold,fontSize: 25),textAlign: TextAlign.left,
+            ),),
+            //email 
+            Container (
+              margin: EdgeInsets.all(9), 
+              child: const Align(
+              alignment: Alignment.centerLeft, 
+              child: Padding(
+                padding: EdgeInsets.only(left: 10),
+                child: Text('E-mail:',style:TextStyle(fontWeight: FontWeight.bold,fontSize: 20))))),
+            SizedBox(
+              width : 350,
+              child: TextFormField(
               controller: _econtroller,
               validator: (String? value){if(value != null && (value.contains('@gmail.com') || value.contains('@outlook.com'))){
                                             if(value.contains(',')){return 'invalid email id';}else{return null;}}
@@ -144,21 +160,34 @@ class _MyHomePageState extends State<MyHomePage> {
                                               !value.contains('@outlook.com'))) ? 'invalid email id' : null;}},
               decoration: const InputDecoration(
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
                 ),
                 hintText: "Enter email id",
               ),
             ),
+            ),
             const Text(" "),
-            const Align(alignment: Alignment.centerLeft, child: Text('Password:',style:TextStyle(fontWeight: FontWeight.bold))),
-            TextFormField(
+            //password 
+            Container(
+              margin: const EdgeInsets.all(9), 
+              child : const Align(
+              alignment: Alignment.centerLeft, 
+              // margin : EdgeInsets.all(11);
+            child: Padding(
+              padding: EdgeInsets.only(left: 10),
+              child: Text('Password:',style:TextStyle(fontWeight: FontWeight.bold,fontSize: 20)),
+            ))),
+            SizedBox( 
+              width : 350,
+            child: TextFormField(
               controller: _pcontroller,
               validator: _textValidator,
               obscureText: password,
               obscuringCharacter:'*',
+              // constraints : const BoxConstraints.tightFor(width:200)
               decoration: InputDecoration(
                 border:const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
                 ),
                 hintText: "Enter password",
                 suffixIcon: IconButton(
@@ -171,7 +200,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
-            const Align(alignment: Alignment.centerRight, child: Text('Forgot Password?',style:TextStyle(fontWeight: FontWeight.bold))),
+            ),
+            Container(
+              margin: const EdgeInsets.all(9),
+            child: const Align(
+              alignment: Alignment.centerRight,
+              child :Padding(
+                padding: EdgeInsets.only(right: 15), 
+              child: Text('Forgot Password?',style:TextStyle(fontWeight: FontWeight.bold))))),
             const Text(" "),
             ElevatedButton(onPressed: _submit, child: const Text("Login")),
             const Text(" "),
