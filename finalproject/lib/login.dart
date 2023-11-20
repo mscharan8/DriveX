@@ -6,6 +6,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:finalproject/main.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+
+GoogleSignIn googleSignIn = GoogleSignIn(
+  scopes: [
+    'email',
+  ],
+);
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
