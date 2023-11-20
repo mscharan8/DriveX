@@ -1,3 +1,4 @@
+import 'package:finalproject/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -213,6 +214,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 _password = _pcontroller.text;
                 try {
                 await auth.createUserWithEmailAndPassword(email: _email, password: _password);
+                // ignore: use_build_context_synchronously
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const login()));
+
                   // Navigator.pushNamed(context,'/SignUp');
                 // Navigator.pushNamed(context, 'home');
                   print("Signed Up Successfulyy");
