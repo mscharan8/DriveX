@@ -275,7 +275,14 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     ),
-      const Text('Already User? SignIn Here'),
+      // const Text('Already User? SignIn Here',Navigator.pushNamed(context, login())),
+      // const Text('Already User? SignIn Here',style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold)),
+      GestureDetector(
+        onTap: (){
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const login()));
+        },
+        child : const Text('Already User? SignIn Here',style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold),),
+      ),
     ];
   }
 }

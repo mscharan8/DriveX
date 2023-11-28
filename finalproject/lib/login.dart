@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'package:finalproject/profile.dart';
 import 'package:finalproject/signup.dart';
 import 'package:finalproject/firebase_options.dart';
-import 'package:finalproject/logout.dart';
+import 'package:finalproject/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -172,7 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 try {
                 await auth.signInWithEmailAndPassword(email: _email, password: _password);
                 // Navigator.pushNamed(context, '/SignIn');
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const logout()));
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Profilepage()));
                   print("Login Successfulyy");
 
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -223,7 +224,12 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      const Text('Already User? SignIn Here'),
+     GestureDetector(
+        onTap: (){
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpPage()));
+        },
+        child : const Text('New User? SignUp Here',style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold),),
+      ),
     ];
   }
 }
