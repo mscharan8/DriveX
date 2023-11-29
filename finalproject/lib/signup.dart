@@ -1,6 +1,7 @@
 import 'package:finalproject/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'home.dart';
 
 class SignUpPage extends StatelessWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -215,17 +216,39 @@ class _MyHomePageState extends State<MyHomePage> {
                 try {
                 await auth.createUserWithEmailAndPassword(email: _email, password: _password);
                 // ignore: use_build_context_synchronously
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const login()));
+                setState(() {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        return const HomePage(); // Default to FirstRoute if the route is unknown.
+                      },
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        const Offset begin = Offset(0.0, 0.0);
+                        const Offset end = Offset(0.0,0.0);
+                        // const Offset end = Offset(0.0,0.0);
+                        const Curve curve = Curves.ease;
+                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                        var offsetAnimation = animation.drive(tween);
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                });
+
 
                   // Navigator.pushNamed(context,'/SignUp');
                 // Navigator.pushNamed(context, 'home');
-                  print("Signed Up Successfulyy");
+                //   print("Signed Up Successfulyy");
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Signed Up Succesfully'),
-                  duration : Duration(seconds : 2),
-                  ),
-                );
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   const SnackBar(content: Text('Signed Up Succesfully'),
+                //   duration : Duration(seconds : 2),
+                //   ),
+                // );
                 _usernameController.clear();
                 _econtroller.clear();
                 _pcontroller.clear();
@@ -279,7 +302,26 @@ class _MyHomePageState extends State<MyHomePage> {
       // const Text('Already User? SignIn Here',style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold)),
       GestureDetector(
         onTap: (){
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const login()));
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return const login(); // Default to FirstRoute if the route is unknown.
+              },
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                const Offset begin = Offset(0.0, 0.0);
+                const Offset end = Offset(0.0,0.0);
+                // const Offset end = Offset(0.0,0.0);
+                const Curve curve = Curves.ease;
+                var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                var offsetAnimation = animation.drive(tween);
+                return SlideTransition(
+                  position: offsetAnimation,
+                  child: child,
+                );
+              },
+            ),
+          );
         },
         child : const Text('Already User? SignIn Here',style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold),),
       ),

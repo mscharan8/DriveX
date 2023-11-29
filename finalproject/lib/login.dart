@@ -1,13 +1,9 @@
 import 'dart:async';
-import 'package:finalproject/profile.dart';
 import 'package:finalproject/signup.dart';
-import 'package:finalproject/firebase_options.dart';
-import 'package:finalproject/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'home.dart';
 
 // ignore: camel_case_types
 class login extends StatelessWidget {
@@ -71,6 +67,34 @@ class _MyHomePageState extends State<MyHomePage> {
     password = true;
   }
 
+  /*Future<void> authenticate() async{
+    try {
+      await auth.signInWithEmailAndPassword(email: _email, password: _password);}
+    catch(e)
+    {
+      if(e is FirebaseAuthException){
+        if(e.code == 'user-not-found'){
+          setState(() {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('invalid-login-credentials'),
+                duration : Duration(seconds : 2),
+              ),
+            );
+          });
+
+        }else if(e.code == 'wrong-password') {
+          setState(() {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Invalid password'),
+                duration : Duration(seconds : 2),
+              ),
+            );
+          });
+        }
+      }
+      // print('Error creating user: $e');
+    }
+  }*/
    @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,39 +195,64 @@ class _MyHomePageState extends State<MyHomePage> {
                 _email = _econtroller.text;
                 _password = _pcontroller.text;
                 try {
-                await auth.signInWithEmailAndPassword(email: _email, password: _password);
-                // Navigator.pushNamed(context, '/SignIn');
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Profilepage()));
-                  print("Login Successfulyy");
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logged In Succesfully'),
-                  duration : Duration(seconds : 2),
-                  ),
-                );
-                _econtroller.clear();
-                _pcontroller.clear();
-                }catch(e)
+                  await auth.signInWithEmailAndPassword(email: _email, password: _password);
+                  setState(() {
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) {
+                          return const HomePage(); // Default to FirstRoute if the route is unknown.
+                        },
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          const Offset begin = Offset(0.0, 0.0);
+                          const Offset end = Offset(0.0,0.0);
+                          // const Offset end = Offset(0.0,0.0);
+                          const Curve curve = Curves.ease;
+                          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                          var offsetAnimation = animation.drive(tween);
+                          return SlideTransition(
+                            position: offsetAnimation,
+                            child: child,
+                          );
+                        },
+                      ),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Logged In Successfully'),
+                        duration : Duration(seconds : 2),
+                      ),
+                    );
+                  });
+                }
+                catch(e)
                 {
                   if(e is FirebaseAuthException){
                     if(e.code == 'user-not-found'){
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('invalid-login-credentials'),
-                        duration : Duration(seconds : 2),
-                  ),
-                      );
+                      setState(() {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('invalid-login-credentials'),
+                            duration : Duration(seconds : 2),
+                          ),
+                        );
+                      });
+
                     }else if(e.code == 'wrong-password') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Invalid password'),
-                        duration : Duration(seconds : 2),
-                        ),
-                      );
+                      setState(() {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Invalid password'),
+                            duration : Duration(seconds : 2),
+                          ),
+                        );
+                      });
                     }
                   }
-                  print('Error creating user: $e');
+                  // print('Error creating user: $e');
                 }
+                _econtroller.clear();
+                _pcontroller.clear();
               },
             ),
+           const Text(" "),
            const Padding(
               padding:  EdgeInsets.symmetric(horizontal: 25.0),
               child :  Row(
@@ -226,7 +275,26 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
      GestureDetector(
         onTap: (){
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpPage()));
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return const SignUpPage(); // Default to FirstRoute if the route is unknown.
+              },
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                const Offset begin = Offset(0.0, 0.0);
+                const Offset end = Offset(0.0,0.0);
+                // const Offset end = Offset(0.0,0.0);
+                const Curve curve = Curves.ease;
+                var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                var offsetAnimation = animation.drive(tween);
+                return SlideTransition(
+                  position: offsetAnimation,
+                  child: child,
+                );
+              },
+            ),
+          );
         },
         child : const Text('New User? SignUp Here',style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold),),
       ),

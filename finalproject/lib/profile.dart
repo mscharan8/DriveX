@@ -1,9 +1,6 @@
-import 'package:finalproject/firebase_options.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:finalproject/signup.dart';
 import 'package:finalproject/login.dart';
 
 
@@ -34,6 +31,10 @@ class _MyHomePageState extends State<MyHomePage> {
   String input = "";
   bool password = false;
   final auth = FirebaseAuth.instance;
+
+  Future<void> signOut() async{
+    await auth.signOut();
+  }
   
    @override
   Widget build(BuildContext context) {
@@ -61,9 +62,35 @@ class _MyHomePageState extends State<MyHomePage> {
            ),
            const SizedBox(height: 50),
         ElevatedButton(
-          onPressed:() async {
-            await auth.signOut();
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const login()),);
+          onPressed:(){
+            signOut();
+              Navigator.of(context, rootNavigator: true).pushReplacement(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) {
+                    return const login(); // Default to FirstRoute if the route is unknown.
+                  },
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    const Offset begin = Offset(0.0, 0.0);
+                    const Offset end = Offset(0.0,0.0);
+                    const Curve curve = Curves.ease;
+                    var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                    var offsetAnimation = animation.drive(tween);
+                    return SlideTransition(
+                      position: offsetAnimation,
+                      child: child,
+                    );
+                  },
+                ),
+              );
+            // Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+            //   MaterialPageRoute(builder: (context) => const login()),
+            //       (route) => false, // This removes all routes from the stack
+            // );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Logged out Successfully'),
+                  duration : Duration(seconds : 2),
+                ),
+              );
           },
           child: const Text('Logout'),
           ),
