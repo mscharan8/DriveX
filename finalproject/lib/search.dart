@@ -20,6 +20,7 @@ class SearchState extends State<Search> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   bool _isTapped = false;
   final  _controller = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -94,12 +95,13 @@ class SearchState extends State<Search> {
                   hintText: 'Choose Location',
                   contentPadding: EdgeInsets.all(8.0),
                 ),
+                readOnly: true,
                 onTap: ()  async {
                   _controller.text = await Navigator.push(
                     context,
                     PageRouteBuilder(
                       pageBuilder: (context, animation, secondaryAnimation) {
-                        return const SearchPage(); // Default to FirstRoute if the route is unknown.
+                        return SearchPage(userSearch: _controller.text); // Default to FirstRoute if the route is unknown.
                       },
                       transitionsBuilder: (context, animation, secondaryAnimation, child) {
                         const Offset begin = Offset(1.0, 0.0);
