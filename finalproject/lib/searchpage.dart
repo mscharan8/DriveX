@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 class SearchPage extends StatefulWidget {
-  const SearchPage({Key? key}) : super(key: key);
+  const SearchPage({Key? key, required this.userSearch}) : super(key: key);
 
+  final String userSearch;
   @override
   State<SearchPage> createState() => _SearchPageState();
 }
@@ -14,7 +15,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    searchController.text = searchController.text;
+    searchController.text = widget.userSearch;
   }
 
   @override
@@ -25,7 +26,7 @@ class _SearchPageState extends State<SearchPage> {
         padding: const EdgeInsets.all(16.0), // Adjust the padding as needed
         child: Align(
           alignment: Alignment.bottomCenter,
-          child: ElevatedButton(onPressed:(){Navigator.of(context).pop(searchController.text);},
+          child: ElevatedButton(onPressed:(){ Navigator.of(context).pop(searchController.text);},
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
               child: const Text("Search", style:TextStyle(color: Colors.black87))),
         ),
@@ -38,7 +39,9 @@ class _SearchPageState extends State<SearchPage> {
     return AppBar(
       backgroundColor: Colors.blueGrey,
       leading: IconButton(
-        onPressed: (){Navigator.of(context).pop();},
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
         icon: const Icon(Icons.chevron_left),
       ),
       title: Row(
