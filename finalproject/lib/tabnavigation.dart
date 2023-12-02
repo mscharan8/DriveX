@@ -16,7 +16,7 @@ class TabNavigator extends StatelessWidget {
 
     late Widget child ;
     if(tabItem == "Search") {
-      child = const Search();}
+      child = const Search(setupPageRoute: '/');}
     else if(tabItem == "Drive"){
       child = const Drive();}
     else if(tabItem == "Inbox"){
