@@ -65,10 +65,10 @@ void getPhoto() async {
           ),
           const SizedBox(height:10),
           const Text('Honda CRV ',textAlign: TextAlign.left,style: TextStyle(fontSize: 22,fontWeight: FontWeight.bold),),
-          const Divider(color: Colors.black),
-             Row(
-                        children : [
-          const Text('Start Trip:  ',textAlign: TextAlign.left,style: TextStyle(fontSize: 22,fontWeight: FontWeight.bold),),
+          // const Divider(color: Colors.black),
+          Row(
+          children : [
+          const Text('Start Trip:  ',textAlign: TextAlign.start,style: TextStyle(fontSize: 22,fontWeight: FontWeight.bold),),
           Transform.scale(
             scale:0.3,
           child:IconButton(
@@ -77,38 +77,28 @@ void getPhoto() async {
                 onPressed: ()  {
                  getPhoto();
                 },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              
+              ],
             ),
+          Row(
+          children : [
+          const Text('End Trip:  ',textAlign: TextAlign.start,style: TextStyle(fontSize: 22,fontWeight: FontWeight.bold),),
+          Transform.scale(
+            scale:0.3,
+          child:IconButton(
+                icon: Image.asset('assets/camera.png'),
+                iconSize: 22,
+                onPressed: ()  {
+                 getPhoto();
+                },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
+    );
+  }
 }
-
-    //   body: Center(
-    //     child: Column(
-    //       mainAxisAlignment: MainAxisAlignment.center,
-    //       children: <Widget>[
-    //        ElevatedButton(onPressed: getPhoto, child: Text('Click Picture')),
-    //         SizedBox(
-    //           height: 250,
-    //           width: 250,
-    //           child: _image != null
-    //               ?Image.file(_image!)
-    //               : Placeholder(
-    //                   fallbackHeight: 100,
-    //                   fallbackWidth: 100,
-    //                   child: Center(
-    //                     child: Text('Picture not taken'),
-    //                   ),
-    //                 ),
-    //         ),
-    //       ]
-    //   ),
-    //  ) );
-        
-//   }
-// }
-
