@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:finalproject/firebase_options.dart';
 import 'package:finalproject/signup.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -34,10 +37,10 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _econtroller = TextEditingController(), _pcontroller = TextEditingController();
   String input = "";
   bool password = false;
-  final bool _initialized = false;
   GoogleSignInAccount? googleUser;
   late String _email, _password;
   final auth = FirebaseAuth.instance;
+  bool _initialized = false;
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
@@ -59,6 +62,44 @@ class _MyHomePageState extends State<MyHomePage> {
       return "Do not use @";
     }
     return null;
+  }
+    Future<void> initializeDefault() async {
+    FirebaseApp app = await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    _initialized = true;
+    if (kDebugMode) {
+      print("Initialized default Firebase app $app");
+    }
+  }
+
+  Future<UserCredential> signInWithGoogle() async {
+    if (!_initialized) {
+      await initializeDefault();
+    }
+    // Trigger the authentication flow
+    googleUser = await GoogleSignIn().signIn();
+    setState(() {
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));  
+    });
+
+    
+
+    if (kDebugMode) {
+      print(googleUser!.displayName);
+    }
+
+    // Obtain the auth details from the request
+    final GoogleSignInAuthentication? googleAuth =
+        await googleUser?.authentication;
+
+    // Create a new credential
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth?.accessToken,
+      idToken: googleAuth?.idToken,
+    );
+    // Once signed in, return the UserCredential
+    return await FirebaseAuth.instance.signInWithCredential(credential);
   }
   
   @override
@@ -98,6 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
    @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       body: Center(
         child: Container(
         height: 500.0,
@@ -117,6 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return <Widget>[
       Form(
         key: _formKey,
+        child: SingleChildScrollView(
         child: Column(
           children: [
             Container(
@@ -268,10 +311,15 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               icon: Image.asset('assets/google.png'),
               iconSize: 40,
-              onPressed: () {},
+              onPressed: () {
+                print('logged in');
+                signInWithGoogle();
+                
+              },
           ),
           ],
         ),
+      ),
       ),
      GestureDetector(
         onTap: (){

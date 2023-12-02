@@ -1,8 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:finalproject/login.dart';
-
+import 'package:google_sign_in/google_sign_in.dart';
 
 class Profilepage extends StatelessWidget {
   const Profilepage({Key? key}):super(key: key);
@@ -31,37 +30,88 @@ class _MyHomePageState extends State<MyHomePage> {
   String input = "";
   bool password = false;
   final auth = FirebaseAuth.instance;
+  User? currentUser;
 
   Future<void> signOut() async{
     await auth.signOut();
+    await GoogleSignIn().signOut();
   }
-  
+
+  String getAuthenticationMethod() {
+  if (currentUser?.providerData.isNotEmpty == true) {
+    return currentUser!.providerData[0].providerId;
+  }
+  return '';
+}
+
+
    @override
   Widget build(BuildContext context) {
-  final currentUser = FirebaseAuth.instance.currentUser;
-  var userEmail = currentUser?.email ?? 'SomeDefaultValue';
+  final currentUser = FirebaseAuth.instance.currentUser!;
     return Scaffold(
       appBar: AppBar(
         title: const Text("Account",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
         centerTitle: true,
         backgroundColor: Colors.white,
       ),
-      body :  Padding(padding: const EdgeInsets.only(top: 20.0),
-        child:Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        // crossAxisAlignment: CrossAxisAlignment.center,
+    body: StreamBuilder(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (snapshot.hasData) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const CircleAvatar(radius: 70, backgroundImage: AssetImage('assets/profile.jpg'),),
-           const SizedBox(height: 20),
-           ListTile(
-            title: const Text('Email'),
-            // subtitle: Text('arsjiyanaheed98@gmail.com'),
-            subtitle: Text(userEmail),
-            leading: const Icon(CupertinoIcons.mail),
-            tileColor: Colors.white,
-           ),
-           const SizedBox(height: 50),
-        ElevatedButton(
+          const SizedBox(height: 20),
+          CircleAvatar(
+            radius: 50,
+            // backgroundImage: AssetImage('assets/profile.jpg'),
+              backgroundImage: currentUser.photoURL != null
+                  ? NetworkImage(currentUser.photoURL!)
+                  : const AssetImage('assets/profile.jpg') as ImageProvider<Object>,
+          ),
+          ListTile(
+            contentPadding: const EdgeInsets.all(0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5),
+            ),
+            subtitle: Center(
+              child: Text(
+                currentUser.displayName ?? 'No Name',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+          const Divider(),
+          ListTile(
+           contentPadding: const EdgeInsets.all(0),
+           subtitle: Padding(
+           padding: const EdgeInsets.only(left: 8.0, top: 8.0, bottom: 8.0),
+           child: Container(
+            margin: const EdgeInsets.all(9),
+          child: Align(
+            alignment: Alignment.centerLeft,
+          child: Padding(
+          padding: const EdgeInsets.only(left: 10),
+          child: Text(
+            'Email: ${currentUser.email ?? 'No Name'}',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.black,
+                    ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+            ElevatedButton(
           onPressed:(){
             signOut();
               Navigator.of(context, rootNavigator: true).pushReplacement(
@@ -86,17 +136,22 @@ class _MyHomePageState extends State<MyHomePage> {
             //   MaterialPageRoute(builder: (context) => const login()),
             //       (route) => false, // This removes all routes from the stack
             // );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Logged out Successfully'),
-                  duration : Duration(seconds : 2),
-                ),
-              );
-          },
-          child: const Text('Logout'),
-          ),
-        ],
+          //     ScaffoldMessenger.of(context).showSnackBar(
+          //       const SnackBar(content: Text('Logged out Successfully'),
+          //         duration : Duration(seconds : 2),
+          //       ),
+          // );
+        },
+        child: const Text('Logout'),
       ),
-    ),
-  );
-}
+        ],
+      );
+    } else {
+      return const Center(child: Text('Not authenticated'));
+    }
+  },
+),
+   
+    );
+  }
 }
