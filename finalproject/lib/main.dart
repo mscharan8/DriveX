@@ -2,6 +2,7 @@ import 'package:finalproject/splashscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:finalproject/firebase_options.dart';
+import 'package:finalproject/drive.dart';
 
 
 void main() async {
@@ -10,7 +11,8 @@ void main() async {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     theme:ThemeData(),
-    home: const SplashScreen(),
+    // home: const SplashScreen(),
+    home: const Drive(),
    )
   );
 }

@@ -37,11 +37,11 @@ class _MyHomePageState extends State<MyHomePage> {
     await GoogleSignIn().signOut();
   }
 
-  String getAuthenticationMethod() {
-  if (currentUser?.providerData.isNotEmpty == true) {
-    return currentUser!.providerData[0].providerId;
+String getAuthenticationMethod(User? user) {
+  if (user != null && user.providerData.isNotEmpty) {
+    return user.providerData[0].providerId;
   }
-  return '';
+  return 'Email and Password'; // Default message for email/password authentication
 }
 
 
@@ -66,7 +66,6 @@ class _MyHomePageState extends State<MyHomePage> {
           const SizedBox(height: 20),
           CircleAvatar(
             radius: 50,
-            // backgroundImage: AssetImage('assets/profile.jpg'),
               backgroundImage: currentUser.photoURL != null
                   ? NetworkImage(currentUser.photoURL!)
                   : const AssetImage('assets/profile.jpg') as ImageProvider<Object>,
@@ -87,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          const Divider(),
+          const Divider(thickness: 0.5, color: Colors.grey),
           ListTile(
            contentPadding: const EdgeInsets.all(0),
            subtitle: Padding(
@@ -100,6 +99,30 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: const EdgeInsets.only(left: 10),
           child: Text(
             'Email: ${currentUser.email ?? 'No Name'}',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.black,
+                    ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const Divider(thickness: 0.5, color: Colors.grey),
+          ListTile(
+           contentPadding: const EdgeInsets.all(0),
+           subtitle: Padding(
+           padding: const EdgeInsets.only(left: 8.0, top: 8.0, bottom: 8.0),
+           child: Container(
+            margin: const EdgeInsets.all(9),
+          child: Align(
+            alignment: Alignment.centerLeft,
+          child: Padding(
+          padding: const EdgeInsets.only(left: 10),
+          child: Text(
+            'Authenticated by: ${getAuthenticationMethod(currentUser)}',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 20,
