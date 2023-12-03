@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:search_map_place_updated/search_map_place_updated.dart';
 import 'searchpage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +20,7 @@ class Search extends StatefulWidget {
 
 class SearchState extends State<Search> {
   final _navigatorKey = GlobalKey<NavigatorState>();
-  bool _isTapped = false;
+  bool _isTapped = false, isSearched = false;
   final  _controller = TextEditingController();
 
   @override
@@ -40,7 +42,10 @@ class SearchState extends State<Search> {
   Route _onGenerateRoute(RouteSettings settings) {
     late Widget page;
     if (settings.name == '/') {
-      page = const Googlemap();
+      if(isSearched==true){
+        page = Googlemap(locationSearched: isSearched, place: _controller.text);
+      }else{
+        page = Googlemap(locationSearched: isSearched, place: _controller.text);}
     }
     if (settings.name == '/list') {
       page = const ListRoute();
@@ -84,40 +89,51 @@ class SearchState extends State<Search> {
         children: [
           SizedBox(
             width: 298,
-            height: 32,
+            height: 34,
             child: TextField(
-                controller: _controller,
-                decoration: const InputDecoration(
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                  filled: true,
-                  fillColor: Colors.white,
-                  hintText: 'Choose Location',
-                  contentPadding: EdgeInsets.all(8.0),
-                ),
-                readOnly: true,
-                onTap: ()  async {
-                  _controller.text = await Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) {
-                        return SearchPage(userSearch: _controller.text); // Default to FirstRoute if the route is unknown.
-                      },
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        const Offset begin = Offset(1.0, 0.0);
-                        const Offset end = Offset(0.0,0.0);
-                        // const Offset end = Offset(0.0,0.0);
-                        const Curve curve = Curves.ease;
-                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                        var offsetAnimation = animation.drive(tween);
-                        return SlideTransition(
-                          position: offsetAnimation,
-                          child: child,
-                        );
-                      },
-                    ),
-                  );
-                }
+              controller: _controller,
+              decoration: const InputDecoration(
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                filled: true,
+                fillColor: Colors.white,
+                hintText: 'Choose Location',
+                contentPadding: EdgeInsets.all(8.0),
+              ),
+              readOnly: true,
+              onTap: ()  async {
+                _controller.text = await Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) {
+                      return SearchPage(userSearch: _controller.text); // Default to FirstRoute if the route is unknown.
+                    },
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      const Offset begin = Offset(1.0, 0.0);
+                      const Offset end = Offset(0.0,0.0);
+                      // const Offset end = Offset(0.0,0.0);
+                      const Curve curve = Curves.ease;
+                      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                      var offsetAnimation = animation.drive(tween);
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+                if(_controller.text.isNotEmpty){
+                  setState(() {
+                    isSearched = true;
+                    _navigatorKey.currentState!.pushNamed('/');
+                  });
+                }else{setState(() {
+                  isSearched = false;
+                  _navigatorKey.currentState!.pushNamed('/');});}
+              },
+              onChanged:(text){
+
+              },
             ),
           ),
           GestureDetector(
@@ -151,17 +167,22 @@ class SearchState extends State<Search> {
 
 
 class Googlemap extends StatefulWidget {
-  const Googlemap({Key? key}) : super(key: key);
+  const Googlemap({Key? key, required this.locationSearched, required this.place}) : super(key: key);
+
+  final bool locationSearched;
+  final String place;
 
   @override
   State<Googlemap> createState() => Googlemapstate();
 }
 
-class Googlemapstate extends State<Googlemap> {
+class Googlemapstate extends State<Googlemap> with TickerProviderStateMixin {
 
-  late GoogleMapController mapController;
-  LatLng? _currentPosition;
+  Completer<GoogleMapController> mapController = Completer();
+  LatLng? _currentPosition, _searchPosition;
   bool _isLoading = true;
+
+  final Set<Marker> _markers = {};
 
   @override
   void initState() {
@@ -196,7 +217,7 @@ class Googlemapstate extends State<Googlemap> {
     });
 
     if (kDebugMode) {
-      print("location codes: $_currentPosition");
+      // print("location codes: $_currentPosition");
     }
     setState(() {
       _isLoading = false;
@@ -205,14 +226,51 @@ class Googlemapstate extends State<Googlemap> {
 
   void setInitialLocation() {
     if (_currentPosition != null) {
-      mapController.animateCamera(
-        CameraUpdate.newLatLng(_currentPosition!),
-      );
+      mapController.future.then((controller) {
+        controller.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
+      });
     }
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+  void setSearchedlocation() {
+    if (_searchPosition != null) {
+      mapController.future.then((controller) {
+        controller.animateCamera(CameraUpdate.newLatLng(_searchPosition!));
+      });
+    }
+  }
+
+
+  void _onMapCreated(GoogleMapController controller) async {
+    mapController.complete(controller);
+    final userLocation =
+    Marker(
+      markerId: const MarkerId("1"),
+      position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+    );
+    setState(() => _markers.add(userLocation));
+
+  }
+
+  void _onSearchMapCreated(BuildContext context, Place place) async {
+    final geolocation = await place.geolocation;
+    final GoogleMapController controller = await mapController.future;
+    controller.animateCamera(CameraUpdate.newLatLng(geolocation?.coordinates));
+    controller.animateCamera(CameraUpdate.newLatLngBounds(geolocation?.bounds, 0));
+    setState(() {
+      final searchedLocation =
+      Marker(
+        markerId: const MarkerId("1"),
+        position: geolocation?.coordinates,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+      );
+
+      _markers.add(searchedLocation);
+      _searchPosition = geolocation?.coordinates;
+      // print("location codes: $_searchPosition");
+    });
+
   }
 
   @override
@@ -221,7 +279,7 @@ class Googlemapstate extends State<Googlemap> {
       body:Center(
         child: Stack(
           children: <Widget>[
-            _buildGoogleMap(),
+            widget.locationSearched ? _buildSearchedGoogleMap() : _buildGoogleMap(),
             _buildLocationButton(),
           ],
         ),
@@ -238,36 +296,28 @@ class Googlemapstate extends State<Googlemap> {
         target: _currentPosition!,
         zoom: 16.0,
       ),
-      markers: {
-        Marker(
-          markerId: const MarkerId("1"),
-          position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-        ),
-      },
+      markers: _markers,
       zoomControlsEnabled: false,
     );
   }
 
-  Widget _buildUpdatedGoogleMap() {
-    return _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : GoogleMap(
-      onMapCreated: _onMapCreated,
-      initialCameraPosition: CameraPosition(
-        target: _currentPosition!,
-        zoom: 16.0,
-      ),
-      markers: {
-        Marker(
-          markerId: const MarkerId("1"),
-          position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-        ),
-      },
-      zoomControlsEnabled: false,
-    );
+  Widget _buildSearchedGoogleMap() {
+    return
+      // _isLoading ?
+      const Center(child: CircularProgressIndicator());
+    //   : GoogleMap(
+    //   GoogleMap(onMapCreated: (GoogleMapController controller) {
+    //   _onSearchMapCreated(context, widget.place as Place);
+    // },
+    //     initialCameraPosition: CameraPosition(
+    //       target: _searchPosition!,
+    //       zoom: 16.0,
+    //     ),
+    //     markers: _markers,
+    //     zoomControlsEnabled: false,
+    //   );
   }
+
 
   Widget _buildLocationButton() {
     if (!_isLoading) {
@@ -280,7 +330,7 @@ class Googlemapstate extends State<Googlemap> {
           child: FloatingActionButton(
             backgroundColor: Colors.white,
             heroTag: 'recenter',
-            onPressed: setInitialLocation,
+            onPressed: widget.locationSearched ? setSearchedlocation : setInitialLocation,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10.0),
               side: const BorderSide(color: Color(0xFFECEDF1)),

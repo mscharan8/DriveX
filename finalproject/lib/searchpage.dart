@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:google_places_flutter/model/prediction.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({Key? key, required this.userSearch}) : super(key: key);
@@ -11,7 +13,6 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
 
   final searchController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
@@ -21,17 +22,24 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0), // Adjust the padding as needed
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: ElevatedButton(onPressed:(){ Navigator.of(context).pop(searchController.text);},
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
-              child: const Text("Search", style:TextStyle(color: Colors.black87))),
-        ),
-      ),
-    );
+        appBar: _buildAppBar(),
+        body: Center(
+            child: Column(
+                children: <Widget>[
+                  const SizedBox(height: 20),
+                  placesAutoCompleteTextField(),
+                  Expanded(
+                    child: Container(), // Add your main content here
+                  ),
+                  Padding(padding: const EdgeInsets.all(16.0), // Adjust the padding as needed
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: ElevatedButton(onPressed:(){ Navigator.of(context).pop(searchController.text);},
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
+                          child: const Text("Search", style:TextStyle(color: Colors.black87))),
+                    ),
+                  )])
+        ));
   }
 
 
@@ -42,38 +50,75 @@ class _SearchPageState extends State<SearchPage> {
         onPressed: () {
           Navigator.of(context).pop();
         },
-        icon: const Icon(Icons.chevron_left),
+        icon: const Icon(Icons.arrow_back),
       ),
       title: Row(
         children: [
-          SizedBox(
-            width: 268,
-            height: 32,
-            child: TextField(
-              controller: searchController,
-              decoration: const InputDecoration(
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                filled: true,
-                fillColor: Colors.white,
-                hintText: 'Search Location',
-                contentPadding: EdgeInsets.all(8.0),
-              ),
-              autofocus: false,
-            ),
+          const Padding(
+            padding: EdgeInsets.only(left: 100.0), // Adjust the value as needed
+            child: Align(alignment: Alignment.centerLeft, child: Text('Search')),
           ),
-          GestureDetector(
-            onTap: () {
-              searchController.clear();
-            },
-            child:  const Padding(
-              padding:EdgeInsets.symmetric(horizontal: 16.0),
-              child:  Text('clear',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          ),
+          Padding(
+              padding: const EdgeInsets.only(left: 100.0), // Adjust the value as needed
+              child:Align(alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: () {
+                    searchController.clear();
+                  },
+                  child: const Text('Clear'),
+                ),
+              ))
         ],
+      ),
+    );
+  }
+
+  placesAutoCompleteTextField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GooglePlaceAutoCompleteTextField(
+        textEditingController: searchController,
+        googleAPIKey: "AIzaSyC0VfkDfuJHQAFttjRzJ8za5ZJRbjkRYq4",
+        inputDecoration: const InputDecoration(
+          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+          filled: true,
+          fillColor: Colors.white,
+          hintText: 'Search Location',
+          contentPadding: EdgeInsets.all(8.0),
+        ),
+        debounceTime: 400,
+        countries: const ["in", "us"],
+        isLatLngRequired: false,
+        getPlaceDetailWithLatLng: (Prediction prediction) {
+          print("placeDetails${prediction.lat}");
+        },
+
+        itemClick: (Prediction prediction) {
+
+          searchController.text = prediction.description ?? "";
+          searchController.selection = TextSelection.fromPosition(
+              TextPosition(offset: prediction.description?.length ?? 0));
+        },
+        seperatedBuilder: const Divider(),
+        itemBuilder: (context, index, Prediction prediction) {
+          return Container(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                const Icon(Icons.location_on),
+                const SizedBox(
+                  width: 7,
+                ),
+                Expanded(child: Text(prediction.description??""))
+              ],
+            ),
+          );
+        },
+
+        isCrossBtnShown: false,
+
+        // default 600 ms ,
       ),
     );
   }
