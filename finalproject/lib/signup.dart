@@ -346,8 +346,8 @@ class _MyHomePageState extends State<MyHomePage> {
               IconButton(
                 icon: Image.asset('assets/google.png'),
                 iconSize: 40,
-                onPressed: () async {
-                 await  signInWithGoogle();
+                onPressed: () {
+                 signInWithGoogle();
                   // adduserdetails(_usernameController.text.trim(),_econtroller.text.trim());
                 },
               ),
