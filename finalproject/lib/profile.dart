@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:finalproject/login.dart';
@@ -51,6 +52,62 @@ class _MyHomePageState extends State<MyHomePage> {
     return 'Unknown';
   }
 
+  Future<void> _editName() async {
+    TextEditingController newNameController = TextEditingController();
+    String newName = "";
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Edit Name"),
+          content: TextField(
+            controller: newNameController,
+            decoration: const InputDecoration(labelText: "Enter your new name"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                newName = newNameController.text;
+                Navigator.of(context).pop();
+
+                if (newName.isNotEmpty) {
+                  try {
+                    await FirebaseAuth.instance.currentUser!.updateDisplayName(newName);
+                    setState(() {
+                      currentUser = FirebaseAuth.instance.currentUser!;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Name updated successfully'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  } catch (e) {
+                    print("Error updating name: $e");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to update name'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser!;
@@ -62,6 +119,12 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: _editName,
+          ),
+        ],
       ),
       body: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
@@ -106,28 +169,22 @@ class _MyHomePageState extends State<MyHomePage> {
                     alignment: Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 30),
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.black,
+                      child: Row(
+                        children: [
+                          Image.asset('assets/email.png',
+                              width: 40, height: 40),
+                          const SizedBox(
+                              width:
+                                  8), // Add some space between image and text
+                          Text(
+                            currentUser.email ?? 'No Name',
+                            style: const TextStyle(
+                              // fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.black,
+                            ),
                           ),
-                          children: [
-                            const TextSpan(
-                              text: 'Email: ',
-                              style: TextStyle(
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                            TextSpan(
-                              text: currentUser.email ?? 'No Name',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
                   ),

@@ -262,8 +262,17 @@ class _MyHomePageState extends State<MyHomePage> {
                       alignment: Alignment.centerRight,
                       child: Padding(
                           padding: EdgeInsets.only(right: 15),
-                          child: Text('Forgot Password?',
-                              style: TextStyle(fontWeight: FontWeight.bold))))),
+              //             child: Text('Forgot Password?',
+              //                 decoration: TextDecoration.underline,
+              // fontWeight: FontWeight.bold),))
+                      child: const Text(
+          'Forgot Password?',
+          style: TextStyle(
+              decoration: TextDecoration.underline,
+              fontWeight: FontWeight.bold),
+        ),)
+              
+              )),
               const Text(" "),
               ElevatedButton(
                 child:
