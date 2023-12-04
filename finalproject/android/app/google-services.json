@@ -14,14 +14,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "624468983805-g5nniq2ubiigiftc0i6mfpaqsfphe5d3.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.assignmentproject",
-            "certificate_hash": "249e32656e30c559ea7b855f69e23690aa14a634"
-          }
-        },
-        {
           "client_id": "624468983805-2l4jv9ujl3e4m92mfsgfdjfuu7od9d9f.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -39,10 +31,10 @@
               "client_type": 3
             },
             {
-              "client_id": "624468983805-dr0qsb2bfl3lvhknvtki8vb5elrvnrkl.apps.googleusercontent.com",
+              "client_id": "624468983805-14dqfi6ufihl5j1tilq6r5q8lfnrjugs.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.assignmentproject.RunnerTests"
+                "bundle_id": "com.example.firebaseChat"
               }
             }
           ]
@@ -75,10 +67,10 @@
               "client_type": 3
             },
             {
-              "client_id": "624468983805-dr0qsb2bfl3lvhknvtki8vb5elrvnrkl.apps.googleusercontent.com",
+              "client_id": "624468983805-14dqfi6ufihl5j1tilq6r5q8lfnrjugs.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.assignmentproject.RunnerTests"
+                "bundle_id": "com.example.firebaseChat"
               }
             }
           ]

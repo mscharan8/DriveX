@@ -1,3 +1,4 @@
+import 'searchpage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -5,14 +6,159 @@ import 'package:geolocator/geolocator.dart';
 import 'list.dart';
 
 class Search extends StatefulWidget {
-  const Search({Key? key}) : super(key: key);
+  static SearchState of(BuildContext context) {
+    return context.findAncestorStateOfType<SearchState>()!;
+  }
+  const Search({Key? key,required this.setupPageRoute}) : super(key: key);
 
+  final String setupPageRoute;
   @override
-  State<Search> createState() => _SearchState();
+  SearchState createState() => SearchState();
 }
 
-class _SearchState extends State<Search> {
+class SearchState extends State<Search> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
   bool _isTapped = false;
+  final  _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: Navigator(
+        key: _navigatorKey,
+        initialRoute: widget.setupPageRoute,
+        onGenerateRoute: _onGenerateRoute,
+      ),
+    );
+  }
+  Route _onGenerateRoute(RouteSettings settings) {
+    late Widget page;
+    if (settings.name == '/') {
+      page = const Googlemap();
+    }
+    if (settings.name == '/list') {
+      page = const ListRoute();
+
+      return PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        settings: settings, // Pass the settings to the PageRouteBuilder
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(0.0, 1.0);
+          const end = Offset(0.0,0.0);
+          const curve = Curves.easeInOut;
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          var offsetAnimation = animation.drive(tween);
+
+          return SlideTransition(position: offsetAnimation, child: child);
+        },
+      );
+
+    }
+
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      settings: settings, // Pass the settings to the PageRouteBuilder
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(position: offsetAnimation, child: child);
+      },
+    );
+
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.blueGrey,
+      title: Row(
+        children: [
+          SizedBox(
+            width: 298,
+            height: 32,
+            child: TextField(
+                controller: _controller,
+                decoration: const InputDecoration(
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Choose Location',
+                  contentPadding: EdgeInsets.all(8.0),
+                ),
+                readOnly: true,
+                onTap: ()  async {
+                  _controller.text = await Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        return SearchPage(userSearch: _controller.text); // Default to FirstRoute if the route is unknown.
+                      },
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        const Offset begin = Offset(1.0, 0.0);
+                        const Offset end = Offset(0.0,0.0);
+                        // const Offset end = Offset(0.0,0.0);
+                        const Curve curve = Curves.ease;
+                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                        var offsetAnimation = animation.drive(tween);
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                }
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              if(!_isTapped){
+                setState(() {
+                  _isTapped = !_isTapped;
+                  _navigatorKey.currentState!.pushNamed('/list');
+                });}
+              else{
+                setState(() {
+                  _isTapped = !_isTapped;
+                  _navigatorKey.currentState!.pop();
+                });
+              }
+
+            },
+            child: Padding(
+              padding:  const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(_isTapped ? 'Map' : 'List',
+                style:  const TextStyle(fontSize: 18),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+}
+
+
+class Googlemap extends StatefulWidget {
+  const Googlemap({Key? key}) : super(key: key);
+
+  @override
+  State<Googlemap> createState() => Googlemapstate();
+}
+
+class Googlemapstate extends State<Googlemap> {
+
   late GoogleMapController mapController;
   LatLng? _currentPosition;
   bool _isLoading = true;
@@ -72,8 +218,7 @@ class _SearchState extends State<Search> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: Center(
+      body:Center(
         child: Stack(
           children: <Widget>[
             _buildGoogleMap(),
@@ -84,87 +229,27 @@ class _SearchState extends State<Search> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.blueGrey,
-      title: Row(
-        children: [
-          SizedBox(
-            width: 298,
-            height: 32,
-            child: TextField(
-                decoration: const InputDecoration(
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                  filled: true,
-                  fillColor: Colors.white,
-                  hintText: 'Choose Location',
-                  contentPadding: EdgeInsets.all(8.0),
-                ),
-                onTap: (){
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) {
-                        return const ListRoute(); // Default to FirstRoute if the route is unknown.
-                      },
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        const Offset begin = Offset(1.0, 0.0);
-                        const Offset end = Offset(0.0,0.0);
-                        // const Offset end = Offset(0.0,0.0);
-                        const Curve curve = Curves.ease;
-                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                        var offsetAnimation = animation.drive(tween);
-                        return SlideTransition(
-                          position: offsetAnimation,
-                          child: child,
-                        );
-                      },
-                    ),
-                  );
-                }
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isTapped = !_isTapped;
-                Navigator.push(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) {
-                      return const ListRoute(); // Default to FirstRoute if the route is unknown.
-                    },
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      const Offset begin = Offset(0.0, 1.0);
-                      const Offset end = Offset(0.0,0.0820);
-                      // const Offset end = Offset(0.0,0.0);
-                      const Curve curve = Curves.ease;
-                      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                      var offsetAnimation = animation.drive(tween);
-                      return SlideTransition(
-                        position: offsetAnimation,
-                        child: child,
-                      );
-                    },
-                  ),
-                );
-              });
-            },
-            child: Padding(
-              padding:  const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(_isTapped ? 'Map' : 'List',
-                style:  const TextStyle(fontSize: 18),
-              ),
-            ),
-          ),
-        ],
+  Widget _buildGoogleMap() {
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : GoogleMap(
+      onMapCreated: _onMapCreated,
+      initialCameraPosition: CameraPosition(
+        target: _currentPosition!,
+        zoom: 16.0,
       ),
+      markers: {
+        Marker(
+          markerId: const MarkerId("1"),
+          position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+        ),
+      },
+      zoomControlsEnabled: false,
     );
   }
 
-
-  Widget _buildGoogleMap() {
+  Widget _buildUpdatedGoogleMap() {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : GoogleMap(

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:finalproject/firebase_options.dart';
 import 'package:finalproject/signup.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -36,10 +38,10 @@ class _MyHomePageState extends State<MyHomePage> {
       _pcontroller = TextEditingController();
   String input = "";
   bool password = false;
-  final bool _initialized = false;
   GoogleSignInAccount? googleUser;
   late String _email, _password;
   final auth = FirebaseAuth.instance;
+  bool _initialized = false;
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
@@ -63,69 +65,83 @@ class _MyHomePageState extends State<MyHomePage> {
     return null;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    password = true;
+  Future<void> initializeDefault() async {
+    FirebaseApp app = await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    _initialized = true;
+    if (kDebugMode) {
+      print("Initialized default Firebase app $app");
+    }
   }
 
-  void _showPage() {
+  void _pushDisplay() {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (context) => const HomePage()));
   }
 
   Future<UserCredential> signInWithGoogle() async {
+    if (!_initialized) {
+      await initializeDefault();
+    }
+    
     // Trigger the authentication flow
-    GoogleSignInAccount? _googleUser = await GoogleSignIn().signIn();
+    googleUser = await GoogleSignIn().signIn();
+
+    _pushDisplay();
 
     if (kDebugMode) {
-      print(_googleUser!.displayName);
+      print(googleUser!.displayName);
     }
-
-    _showPage();
 
     // Obtain the auth details from the request
     final GoogleSignInAuthentication? googleAuth =
-        await _googleUser?.authentication;
+        await googleUser?.authentication;
 
     // Create a new credential
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth?.accessToken,
       idToken: googleAuth?.idToken,
     );
-
     // Once signed in, return the UserCredential
     return await FirebaseAuth.instance.signInWithCredential(credential);
   }
 
-  /*Future<void> authenticate() async{
-    try {
-      await auth.signInWithEmailAndPassword(email: _email, password: _password);}
-    catch(e)
-    {
-      if(e is FirebaseAuthException){
-        if(e.code == 'user-not-found'){
-          setState(() {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('invalid-login-credentials'),
-                duration : Duration(seconds : 2),
-              ),
-            );
-          });
+  @override
+  void initState() {
+    super.initState();
+    password = true;
+  }
 
-        }else if(e.code == 'wrong-password') {
-          setState(() {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Invalid password'),
-                duration : Duration(seconds : 2),
-              ),
-            );
-          });
-        }
-      }
-      // print('Error creating user: $e');
-    }
-  }*/
+  // Future<void> authenticate() async {
+  //   try {
+  //     await auth.signInWithEmailAndPassword(email: _email, password: _password);
+  //   } catch (e) {
+  //     if (e is FirebaseAuthException) {
+  //       if (e.code == 'user-not-found') {
+  //         setState(() {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             const SnackBar(
+  //               content: Text('invalid-login-credentials'),
+  //               duration: Duration(seconds: 2),
+  //             ),
+  //           );
+  //         });
+  //       } else if (e.code == 'wrong-password') {
+  //         setState(() {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             const SnackBar(
+  //               content: Text('Invalid password'),
+  //               duration: Duration(seconds: 2),
+  //             ),
+  //           );
+  //         });
+  //       }
+  //     }
+  //     // print('Error creating user: $e');
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,192 +167,197 @@ class _MyHomePageState extends State<MyHomePage> {
     return <Widget>[
       Form(
         key: _formKey,
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.all(11),
-              alignment: Alignment.topLeft,
-              child: const Text(
-                "Login",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-                textAlign: TextAlign.left,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.all(11),
+                alignment: Alignment.topLeft,
+                child: const Text(
+                  "Login",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                  textAlign: TextAlign.left,
+                ),
               ),
-            ),
-            //email
-            Container(
-                margin: const EdgeInsets.all(9),
-                child: const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: Text('E-mail:',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 20))))),
-            SizedBox(
-              width: 350,
-              child: TextFormField(
-                controller: _econtroller,
-                validator: (String? value) {
-                  if (value != null &&
-                      (value.contains('@gmail.com') ||
-                          value.contains('@outlook.com'))) {
-                    if (value.contains(',')) {
-                      return 'invalid email id';
+              //email
+              Container(
+                  margin: const EdgeInsets.all(9),
+                  child: const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                          padding: EdgeInsets.only(left: 10),
+                          child: Text('E-mail:',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20))))),
+              SizedBox(
+                width: 350,
+                child: TextFormField(
+                  controller: _econtroller,
+                  validator: (String? value) {
+                    if (value != null &&
+                        (value.contains('@gmail.com') ||
+                            value.contains('@outlook.com'))) {
+                      if (value.contains(',')) {
+                        return 'invalid email id';
+                      } else {
+                        return null;
+                      }
                     } else {
-                      return null;
+                      return (value != null &&
+                              (!value.contains('@gmail.com') ||
+                                  !value.contains('@outlook.com')))
+                          ? 'invalid email id'
+                          : null;
                     }
-                  } else {
-                    return (value != null &&
-                            (!value.contains('@gmail.com') ||
-                                !value.contains('@outlook.com')))
-                        ? 'invalid email id'
-                        : null;
-                  }
-                },
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                  ),
-                  hintText: "Enter email id",
-                ),
-              ),
-            ),
-            const Text(" "),
-            //password
-            Container(
-                margin: const EdgeInsets.all(9),
-                child: const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 10),
-                      child: Text('Password:',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20)),
-                    ))),
-            SizedBox(
-              width: 350,
-              child: TextFormField(
-                controller: _pcontroller,
-                validator: _textValidator,
-                obscureText: password,
-                obscuringCharacter: '*',
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                  ),
-                  hintText: "Enter password",
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      password ? Icons.visibility : Icons.visibility_off,
+                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(15.0)),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        password = !password;
-                      });
-                    },
+                    hintText: "Enter email id",
                   ),
                 ),
               ),
-            ),
-            Container(
-                margin: const EdgeInsets.all(9),
-                child: const Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                        padding: EdgeInsets.only(right: 15),
-                        child: Text('Forgot Password?',
-                            style: TextStyle(fontWeight: FontWeight.bold))))),
-            const Text(" "),
-            ElevatedButton(
-              child: const Text('Login', style: TextStyle(color: Colors.white)),
-              onPressed: () async {
-                _email = _econtroller.text;
-                _password = _pcontroller.text;
-                try {
-                  await auth.signInWithEmailAndPassword(
-                      email: _email, password: _password);
-                  setState(() {
-                    Navigator.pushReplacement(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) {
-                          return const HomePage(); // Default to FirstRoute if the route is unknown.
-                        },
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                          const Offset begin = Offset(0.0, 0.0);
-                          const Offset end = Offset(0.0, 0.0);
-                          // const Offset end = Offset(0.0,0.0);
-                          const Curve curve = Curves.ease;
-                          var tween = Tween(begin: begin, end: end)
-                              .chain(CurveTween(curve: curve));
-                          var offsetAnimation = animation.drive(tween);
-                          return SlideTransition(
-                            position: offsetAnimation,
-                            child: child,
-                          );
-                        },
+              const Text(" "),
+              //password
+              Container(
+                  margin: const EdgeInsets.all(9),
+                  child: const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 10),
+                        child: Text('Password:',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20)),
+                      ))),
+              SizedBox(
+                width: 350,
+                child: TextFormField(
+                  controller: _pcontroller,
+                  validator: _textValidator,
+                  obscureText: password,
+                  obscuringCharacter: '*',
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                    ),
+                    hintText: "Enter password",
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        password ? Icons.visibility : Icons.visibility_off,
                       ),
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Logged In Successfully'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  });
-                } catch (e) {
-                  if (e is FirebaseAuthException) {
-                    if (e.code == 'user-not-found') {
-                      setState(() {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('invalid-login-credentials'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      });
-                    } else if (e.code == 'wrong-password') {
-                      setState(() {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Invalid password'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      });
-                    }
-                  }
-                  // print('Error creating user: $e');
-                }
-                _econtroller.clear();
-                _pcontroller.clear();
-              },
-            ),
-            const Text(" "),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 25.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Divider(thickness: 0.5, color: Colors.grey),
+                      onPressed: () {
+                        setState(() {
+                          password = !password;
+                        });
+                      },
+                    ),
                   ),
-                  Text('Or continue With'),
-                  Expanded(
-                    child: Divider(thickness: 0.5, color: Colors.grey),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const Text(" "),
-            IconButton(
-              icon: Image.asset('assets/google.png'),
-              iconSize: 40,
-              onPressed: () {
-                signInWithGoogle();
-              },
-            ),
-          ],
+              Container(
+                  margin: const EdgeInsets.all(9),
+                  child: const Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                          padding: EdgeInsets.only(right: 15),
+                          child: Text('Forgot Password?',
+                              style: TextStyle(fontWeight: FontWeight.bold))))),
+              const Text(" "),
+              ElevatedButton(
+                child:
+                    const Text('Login', style: TextStyle(color: Colors.white)),
+                onPressed: () async {
+                  _email = _econtroller.text;
+                  _password = _pcontroller.text;
+                  try {
+                    await auth.signInWithEmailAndPassword(
+                        email: _email, password: _password);
+                    setState(() {
+                      Navigator.pushReplacement(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) {
+                            return const HomePage(); // Default to FirstRoute if the route is unknown.
+                          },
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                            const Offset begin = Offset(0.0, 0.0);
+                            const Offset end = Offset(0.0, 0.0);
+                            // const Offset end = Offset(0.0,0.0);
+                            const Curve curve = Curves.ease;
+                            var tween = Tween(begin: begin, end: end)
+                                .chain(CurveTween(curve: curve));
+                            var offsetAnimation = animation.drive(tween);
+                            return SlideTransition(
+                              position: offsetAnimation,
+                              child: child,
+                            );
+                          },
+                        ),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Logged In Successfully'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    });
+                  } catch (e) {
+                    if (e is FirebaseAuthException) {
+                      if (e.code == 'user-not-found') {
+                        setState(() {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('invalid-login-credentials'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        });
+                      } else if (e.code == 'wrong-password') {
+                        setState(() {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Invalid password'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        });
+                      }
+                    }
+                    // print('Error creating user: $e');
+                  }
+                  _econtroller.clear();
+                  _pcontroller.clear();
+                },
+              ),
+              const Text(" "),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 25.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Divider(thickness: 0.5, color: Colors.grey),
+                    ),
+                    Text('Or continue With'),
+                    Expanded(
+                      child: Divider(thickness: 0.5, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              const Text(" "),
+              IconButton(
+                icon: Image.asset('assets/google.png'),
+                iconSize: 40,
+                onPressed: () {
+                  signInWithGoogle();
+                },
+              ),
+            ],
+          ),
         ),
       ),
       GestureDetector(
