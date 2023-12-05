@@ -84,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!_initialized) {
       await initializeDefault();
     }
-    
+
     // Trigger the authentication flow
     googleUser = await GoogleSignIn().signIn();
 
@@ -256,23 +256,54 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ),
-              Container(
-                  margin: const EdgeInsets.all(9),
-                  child: const Align(
-                      alignment: Alignment.centerRight,
-                      child: Padding(
-                          padding: EdgeInsets.only(right: 15),
-              //             child: Text('Forgot Password?',
+              // Container(
+              //     margin: const EdgeInsets.all(9),
+              //     child: const Align(
+              //         alignment: Alignment.centerRight,
+              //         child: Padding(
+              //           padding: EdgeInsets.only(right: 15),
+              //           //             child: Text('Forgot Password?',
+              //           //                 decoration: TextDecoration.underline,
+              //           // fontWeight: FontWeight.bold),))
+              //           child:  Text(
+              //             'Forgot Password?',
+              //             style: TextStyle(
               //                 decoration: TextDecoration.underline,
-              // fontWeight: FontWeight.bold),))
-                      child: const Text(
-          'Forgot Password?',
-          style: TextStyle(
-              decoration: TextDecoration.underline,
-              fontWeight: FontWeight.bold),
-        ),)
-              
-              )),
+              //                 fontWeight: FontWeight.bold),
+              //           ),
+              //         ))),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        return const SignUpPage(); // Default to FirstRoute if the route is unknown.
+                      },
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        const Offset begin = Offset(0.0, 0.0);
+                        const Offset end = Offset(0.0, 0.0);
+                        const Curve curve = Curves.ease;
+                        var tween = Tween(begin: begin, end: end)
+                            .chain(CurveTween(curve: curve));
+                        var offsetAnimation = animation.drive(tween);
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Forgot Password?',
+                  style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.left,
+                ),
+              ),
               const Text(" "),
               ElevatedButton(
                 child:

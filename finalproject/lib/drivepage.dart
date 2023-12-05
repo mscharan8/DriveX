@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:finalproject/Tripspage.dart';
 
 class Drivepage extends StatefulWidget {
   const Drivepage({Key? key}) : super(key: key);
@@ -12,12 +14,12 @@ class Drivepage extends StatefulWidget {
 }
 
 class _DrivepageState extends State<Drivepage> {
-    int startImageCounter = 0;
+  int startImageCounter = 0;
   int endImageCounter = 0;
   bool tripEnded = false;
 
   final List<XFile?> _startTripImages = List.filled(4, null);
-  final List<XFile?> _endTripImages = List.filled (4, null);
+  final List<XFile?> _endTripImages = List.filled(4, null);
 
   Future<void> _startTripImagePicker(int index) async {
     final ImagePicker spicker = ImagePicker();
@@ -49,6 +51,36 @@ class _DrivepageState extends State<Drivepage> {
       }
     } catch (e) {
       print('Error during image capture: $e');
+    }
+  }
+
+  Future<void> savingpictures(String firstName, String email,
+      List<String?> startImagePaths, List<String?> endImagePaths) async {
+    try {
+      final CollectionReference photosCollection =
+          FirebaseFirestore.instance.collection('photos2');
+
+      Map<String, dynamic> tripImages = {
+        'first name': firstName,
+        'email': email,
+        'tripType': 'start',
+        'startImagePaths': startImagePaths,
+        'tripType': 'end',
+        'endImagePaths': endImagePaths,
+      };
+
+      await photosCollection.add(tripImages);
+
+      setState(() {
+        startImageCounter = 0;
+        endImageCounter = 0;
+        _startTripImages.fillRange(0, 4, null);
+        _endTripImages.fillRange(0, 4, null);
+      });
+
+      print('Images saved to Firebase successfully!');
+    } catch (e) {
+      print('Error saving images to Firebase: $e');
     }
   }
 
@@ -109,7 +141,6 @@ class _DrivepageState extends State<Drivepage> {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-
           Row(
             children: [
               Container(
@@ -212,10 +243,9 @@ class _DrivepageState extends State<Drivepage> {
                 child: IconButton(
                   icon: Image.asset('assets/camera.png'),
                   iconSize: 22,
-                  onPressed: ()  
-                  {
+                  onPressed: () {
                     if (startImageCounter == 4) {
-                    _endTripImagePicker(endImageCounter);
+                      _endTripImagePicker(endImageCounter);
                     }
                   },
                 ),
@@ -277,30 +307,39 @@ class _DrivepageState extends State<Drivepage> {
             ),
           ),
           ElevatedButton(
-            onPressed: endImageCounter == 4? () {
-              // imagescount(),
-            }: null,
+            onPressed: endImageCounter == 4
+                ? () async {
+                    List<String?> startImagePaths =
+                        _startTripImages.map((image) => image?.path).toList();
+                    List<String?> endImagePaths =
+                        _endTripImages.map((image) => image?.path).toList();
+                    savingpictures(
+                        'firstName', 'email', startImagePaths, endImagePaths);
+
+                    await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Your trip has been ended'),
+                          content: Text('Hope you had a safe trip'),
+                        );
+                      },
+                    );
+
+                    await Future.delayed(Duration(seconds: 3));
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const Tripspage(),
+                      ),
+                    );
+                  }
+                : null,
             child: const Text('End Trip'),
           ),
         ],
       ),
     );
   }
-
-  // int imagescount() {
-  //   for (int i = 0; i < _startTripImagePaths.length; i++) {
-  //     if (_startTripImagePaths[i] == null && _endTripImagePaths[i] == null) {
-  //       return i;
-  //     }
-
-  //     if (imagescount != 0) {
-  //       imagecounter++;
-  //     }
-
-  //     if (imagecounter == 4) {
-  //       // ElevatedButton(onPressed: (){},child : const Text('End Trip'),),
-  //     }
-  //   }
-  //   return imagecounter;
-  // }
 }

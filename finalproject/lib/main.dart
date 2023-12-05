@@ -15,7 +15,7 @@ void main() async {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     theme:ThemeData(),
-    home: const SplashScreen(),
+    home: const Drivepage(),
    )
   );
 }
