@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'home.dart';
 
 // ignore: camel_case_types
@@ -36,18 +38,35 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _econtroller = TextEditingController(), _pcontroller = TextEditingController();
   String input = "";
-  bool password = false;
+  bool password = true, _initialized = false, _isLoading = true;
   GoogleSignInAccount? googleUser;
   late String _email, _password;
   final auth = FirebaseAuth.instance;
-  bool _initialized = false;
+  late LatLng _currentPosition;
 
-  Future<void> _submit() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        String text = _econtroller.text;
-        input = 'Saved Latest:-  $text';
-      });
+  Future<void> getLocation() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if(permission == LocationPermission.denied) {
+        return;
+      }
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    double lat = position.latitude;
+    double long = position.longitude;
+    LatLng location = LatLng(lat, long);
+
+    setState(() {
+      _currentPosition = location;
+      _isLoading = false;
+    });
+    if (kDebugMode) {
+      print("location codes: $_currentPosition");
     }
   }
 
@@ -63,7 +82,8 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     return null;
   }
-    Future<void> initializeDefault() async {
+
+  Future<void> initializeDefault() async {
     FirebaseApp app = await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
@@ -80,7 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // Trigger the authentication flow
     googleUser = await GoogleSignIn().signIn();
     setState(() {
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));  
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage(loaded:_isLoading, position: _currentPosition,)));
     });
 
     
@@ -105,37 +125,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    password = true;
+    getLocation();
   }
 
-  /*Future<void> authenticate() async{
-    try {
-      await auth.signInWithEmailAndPassword(email: _email, password: _password);}
-    catch(e)
-    {
-      if(e is FirebaseAuthException){
-        if(e.code == 'user-not-found'){
-          setState(() {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('invalid-login-credentials'),
-                duration : Duration(seconds : 2),
-              ),
-            );
-          });
-
-        }else if(e.code == 'wrong-password') {
-          setState(() {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Invalid password'),
-                duration : Duration(seconds : 2),
-              ),
-            );
-          });
-        }
-      }
-      // print('Error creating user: $e');
-    }
-  }*/
    @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,6 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
   List<Widget> getBodyWidgetList() {
     return <Widget>[
       Form(
@@ -244,7 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       context,
                       PageRouteBuilder(
                         pageBuilder: (context, animation, secondaryAnimation) {
-                          return const HomePage(); // Default to FirstRoute if the route is unknown.
+                          return HomePage(loaded: _isLoading, position: _currentPosition); // Default to FirstRoute if the route is unknown.
                         },
                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
                           const Offset begin = Offset(0.0, 0.0);

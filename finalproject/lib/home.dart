@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'tabnavigation.dart';
 
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({Key? key, required this.loaded, required this.position}) : super(key: key);
+
+  final bool loaded;
+  final LatLng position;
 
   @override
   State<HomePage> createState() => _HomePage();
 }
 
 class _HomePage extends State<HomePage> {
-
   bool typing = false;
   String _currentPage = "Search";
   List<String> pageKeys = ["Search", "Drive", "Inbox", "Trips", "Profile"];
@@ -23,8 +26,7 @@ class _HomePage extends State<HomePage> {
   };
   int _selectedIndex = 0;
 
-
-  void _selectTab(String tabItem, int index) {
+  void _selectTab(String tabItem, int index){
     if(tabItem == _currentPage ){
       _navigatorKeys[tabItem]?.currentState?.popUntil((route) => route.isFirst);
     }else {
@@ -96,6 +98,8 @@ class _HomePage extends State<HomePage> {
       child: TabNavigator(
         navigatorKey: _navigatorKeys[tabItem]!,
         tabItem: tabItem,
+        loaded: widget.loaded,
+        position: widget.position,
       ),
     );
   }

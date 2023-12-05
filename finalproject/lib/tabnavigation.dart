@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'search.dart';
-import 'profile.dart';
 
 class TabNavigator extends StatelessWidget {
   const TabNavigator({
     Key? key,
     required this.navigatorKey,
     required this.tabItem,
+    required this.loaded,
+    required this.position
   }) : super(key: key);
+
   final GlobalKey<NavigatorState> navigatorKey;
   final String tabItem;
+  final bool loaded;
+  final LatLng position;
 
   @override
   Widget build(BuildContext context) {
 
     late Widget child ;
     if(tabItem == "Search") {
-      child = const Search(setupPageRoute: '/');}
+      child = Search(setupPageRoute: '/', loaded: loaded, position: position);}
     else if(tabItem == "Drive"){
       child = const Drive();}
     else if(tabItem == "Inbox"){
@@ -24,7 +29,7 @@ class TabNavigator extends StatelessWidget {
     else if(tabItem == "Trips"){
       child = const Trips();}
     else if(tabItem == "Profile"){
-      child = const Profilepage();}
+      child = const Profile();}
 
     return Navigator(
       key: navigatorKey,
@@ -71,6 +76,19 @@ class Trips extends StatelessWidget {
     return const Scaffold(
       body: Center(
         child: Text("DriveX Trips Tab",style:TextStyle(fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+}
+
+class Profile extends StatelessWidget {
+  const Profile({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Text("DriveX Profile Tab",style:TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }

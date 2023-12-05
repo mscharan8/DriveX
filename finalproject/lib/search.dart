@@ -1,31 +1,35 @@
 import 'dart:async';
-import 'package:search_map_place_updated/search_map_place_updated.dart';
 import 'searchpage.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'list.dart';
 
 class Search extends StatefulWidget {
   static SearchState of(BuildContext context) {
     return context.findAncestorStateOfType<SearchState>()!;
   }
-  const Search({Key? key,required this.setupPageRoute}) : super(key: key);
+  const Search({Key? key,required this.setupPageRoute, required this.loaded, required this.position}) : super(key: key);
 
   final String setupPageRoute;
+  final bool loaded;
+  final LatLng position;
   @override
   SearchState createState() => SearchState();
 }
 
 class SearchState extends State<Search> {
   final _navigatorKey = GlobalKey<NavigatorState>();
-  bool _isTapped = false, isSearched = false;
+  bool _isTapped = false, isSearched = false, _isLoading = true;
   final  _controller = TextEditingController();
+  late Map<String, dynamic> place;
+  // final LatLng _searchedPosition = const LatLng(39.7278851, -121.845067);
+  late LatLng _currentPosition ,_searchedPosition;
 
   @override
   void initState() {
     super.initState();
+    _isLoading = widget.loaded;
+    _currentPosition = widget.position;
   }
 
   @override
@@ -43,9 +47,9 @@ class SearchState extends State<Search> {
     late Widget page;
     if (settings.name == '/') {
       if(isSearched==true){
-        page = Googlemap(locationSearched: isSearched, place: _controller.text);
+        page = Googlemap(loaded: _isLoading, position: _searchedPosition);
       }else{
-        page = Googlemap(locationSearched: isSearched, place: _controller.text);}
+        page = Googlemap(loaded: _isLoading, position: _currentPosition);}
     }
     if (settings.name == '/list') {
       page = const ListRoute();
@@ -91,49 +95,50 @@ class SearchState extends State<Search> {
             width: 298,
             height: 34,
             child: TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                filled: true,
-                fillColor: Colors.white,
-                hintText: 'Choose Location',
-                contentPadding: EdgeInsets.all(8.0),
-              ),
-              readOnly: true,
-              onTap: ()  async {
-                _controller.text = await Navigator.push(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) {
-                      return SearchPage(userSearch: _controller.text); // Default to FirstRoute if the route is unknown.
-                    },
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      const Offset begin = Offset(1.0, 0.0);
-                      const Offset end = Offset(0.0,0.0);
-                      // const Offset end = Offset(0.0,0.0);
-                      const Curve curve = Curves.ease;
-                      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                      var offsetAnimation = animation.drive(tween);
-                      return SlideTransition(
-                        position: offsetAnimation,
-                        child: child,
-                      );
-                    },
-                  ),
-                );
-                if(_controller.text.isNotEmpty){
-                  setState(() {
-                    isSearched = true;
-                    _navigatorKey.currentState!.pushNamed('/');
-                  });
-                }else{setState(() {
-                  isSearched = false;
-                  _navigatorKey.currentState!.pushNamed('/');});}
-              },
-              onChanged:(text){
-
-              },
+                controller: _controller,
+                decoration: const InputDecoration(
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Choose Location',
+                  contentPadding: EdgeInsets.all(8.0),
+                ),
+                readOnly: true,
+                onTap: ()  async {
+                  place = await Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        return SearchPage(userSearch: _controller.text); // Default to FirstRoute if the route is unknown.
+                      },
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        const Offset begin = Offset(1.0, 0.0);
+                        const Offset end = Offset(0.0,0.0);
+                        // const Offset end = Offset(0.0,0.0);
+                        const Curve curve = Curves.ease;
+                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                        var offsetAnimation = animation.drive(tween);
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                  if (place.containsKey('location') && place.containsKey('latLng')) {
+                    _controller.text = place['location'];
+                    if(_controller.text.isNotEmpty){
+                      setState(() {
+                        isSearched = true;
+                        _searchedPosition = place['latLng'];
+                        _navigatorKey.currentState!.pushNamed('/');
+                      });
+                    }else{setState(() {
+                      isSearched = false;
+                      _navigatorKey.currentState!.pushNamed('/');});}
+                  }
+                }
             ),
           ),
           GestureDetector(
@@ -167,111 +172,58 @@ class SearchState extends State<Search> {
 
 
 class Googlemap extends StatefulWidget {
-  const Googlemap({Key? key, required this.locationSearched, required this.place}) : super(key: key);
+  const Googlemap({Key? key, required this.loaded, required this.position}) : super(key: key);
 
-  final bool locationSearched;
-  final String place;
+  final bool loaded ;
+  final LatLng position;
 
   @override
   State<Googlemap> createState() => Googlemapstate();
 }
 
-class Googlemapstate extends State<Googlemap> with TickerProviderStateMixin {
+class Googlemapstate extends State<Googlemap>{
 
   Completer<GoogleMapController> mapController = Completer();
-  LatLng? _currentPosition, _searchPosition;
-  bool _isLoading = true;
-
+  // late GoogleMapController mapController;
   final Set<Marker> _markers = {};
+  bool _isLoading = false;
+  late LatLng _currentPosition;
 
   @override
   void initState() {
     super.initState();
-    getLocation();
-  }
-
-  Future<void> getLocation() async {
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if(permission == LocationPermission.denied) {
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-    }
-
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    double lat = position.latitude;
-    double long = position.longitude;
-    LatLng location = LatLng(lat, long);
-
-    setState(() {
-      _currentPosition = location;
-      _isLoading = false;
-    });
-
-    if (kDebugMode) {
-      // print("location codes: $_currentPosition");
-    }
-    setState(() {
-      _isLoading = false;
-    });
+    _isLoading = widget.loaded;
+    _currentPosition = widget.position;
   }
 
   void setInitialLocation() {
-    if (_currentPosition != null) {
-      mapController.future.then((controller) {
-        controller.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
-      });
-    }
+    mapController.future.then((controller) {
+      controller.animateCamera(CameraUpdate.newLatLng(_currentPosition));
+    });
   }
+  // void setInitialLocation() {
+  //   if (_currentPosition != null) {
+  //     mapController.animateCamera(
+  //       CameraUpdate.newLatLng(_currentPosition!),
+  //     );
+  //   }
+  // }
 
-  void setSearchedlocation() {
-    if (_searchPosition != null) {
-      mapController.future.then((controller) {
-        controller.animateCamera(CameraUpdate.newLatLng(_searchPosition!));
-      });
-    }
-  }
-
-
-  void _onMapCreated(GoogleMapController controller) async {
+  void _onMapCreated(GoogleMapController controller){
     mapController.complete(controller);
-    final userLocation =
-    Marker(
+    final userLocation = Marker(
       markerId: const MarkerId("1"),
-      position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      position: LatLng(_currentPosition.latitude, _currentPosition.longitude),
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
     );
     setState(() => _markers.add(userLocation));
-
   }
 
-  void _onSearchMapCreated(BuildContext context, Place place) async {
-    final geolocation = await place.geolocation;
-    final GoogleMapController controller = await mapController.future;
-    controller.animateCamera(CameraUpdate.newLatLng(geolocation?.coordinates));
-    controller.animateCamera(CameraUpdate.newLatLngBounds(geolocation?.bounds, 0));
-    setState(() {
-      final searchedLocation =
-      Marker(
-        markerId: const MarkerId("1"),
-        position: geolocation?.coordinates,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-      );
+  // void _onMapCreated(GoogleMapController controller) {
+  //
+  //   mapController = controller;
+  // }
 
-      _markers.add(searchedLocation);
-      _searchPosition = geolocation?.coordinates;
-      // print("location codes: $_searchPosition");
-    });
-
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -279,7 +231,7 @@ class Googlemapstate extends State<Googlemap> with TickerProviderStateMixin {
       body:Center(
         child: Stack(
           children: <Widget>[
-            widget.locationSearched ? _buildSearchedGoogleMap() : _buildGoogleMap(),
+            _buildGoogleMap(),
             _buildLocationButton(),
           ],
         ),
@@ -290,32 +242,24 @@ class Googlemapstate extends State<Googlemap> with TickerProviderStateMixin {
   Widget _buildGoogleMap() {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
-        : GoogleMap(
+        :
+    GoogleMap(
+      mapType: MapType.normal,
       onMapCreated: _onMapCreated,
       initialCameraPosition: CameraPosition(
-        target: _currentPosition!,
+        target: _currentPosition,
         zoom: 16.0,
       ),
       markers: _markers,
+      // markers: {
+      //   Marker(
+      //     markerId: const MarkerId("1"),
+      //     position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      //     icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+      //   ),
+      // },
       zoomControlsEnabled: false,
     );
-  }
-
-  Widget _buildSearchedGoogleMap() {
-    return
-      // _isLoading ?
-      const Center(child: CircularProgressIndicator());
-    //   : GoogleMap(
-    //   GoogleMap(onMapCreated: (GoogleMapController controller) {
-    //   _onSearchMapCreated(context, widget.place as Place);
-    // },
-    //     initialCameraPosition: CameraPosition(
-    //       target: _searchPosition!,
-    //       zoom: 16.0,
-    //     ),
-    //     markers: _markers,
-    //     zoomControlsEnabled: false,
-    //   );
   }
 
 
@@ -330,7 +274,7 @@ class Googlemapstate extends State<Googlemap> with TickerProviderStateMixin {
           child: FloatingActionButton(
             backgroundColor: Colors.white,
             heroTag: 'recenter',
-            onPressed: widget.locationSearched ? setSearchedlocation : setInitialLocation,
+            onPressed: setInitialLocation,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10.0),
               side: const BorderSide(color: Color(0xFFECEDF1)),

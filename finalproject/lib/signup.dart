@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -36,19 +38,35 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _pcontroller = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   late String _email, _password, _username;
-  bool password = true;
+  bool password = true, _isLoading = true;
   final auth = FirebaseAuth.instance;
   bool _initialized = false;
   GoogleSignInAccount? googleUser;
+  late LatLng _currentPosition;
 
-  Future<void> _submit() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        String text = _econtroller.text;
-        print('Saved Latest: $text');
-        _username = _usernameController.text;
-        // adduserdetails(_username, _econtroller.text);
-      });
+  Future<void> getLocation() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if(permission == LocationPermission.denied) {
+        return;
+      }
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    double lat = position.latitude;
+    double long = position.longitude;
+    LatLng location = LatLng(lat, long);
+
+    setState(() {
+      _currentPosition = location;
+      _isLoading = false;
+    });
+    if (kDebugMode) {
+      print("location codes: $_currentPosition");
     }
   }
 
@@ -82,30 +100,26 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!_initialized) {
       await initializeDefault();
     }
-    // Trigger the authentication flow
+
     googleUser = await GoogleSignIn().signIn();
 
      setState(() {
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));  
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage(loaded: _isLoading, position: _currentPosition)));
     });
 
     if (kDebugMode) {
       print(googleUser!.displayName);
     }
 
-    // Obtain the auth details from the request
     final GoogleSignInAuthentication? googleAuth =
         await googleUser?.authentication;
 
-    // Create a new credential
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth?.accessToken,
       idToken: googleAuth?.idToken,
     );
 
-    // Once signed in, return the UserCredential
     return await FirebaseAuth.instance.signInWithCredential(credential);
-    // notifylisteners();
   }
 
   Future savinguserdetails(String firstName, String email) async{
@@ -118,8 +132,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    // initializeDefault();
-    password = true;
+    getLocation();
   }
 
   @override
@@ -282,7 +295,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         PageRouteBuilder(
                           pageBuilder:
                               (context, animation, secondaryAnimation) {
-                            return const HomePage(); // Default to FirstRoute if the route is unknown.
+                            return HomePage(loaded: _isLoading, position: _currentPosition); // Default to FirstRoute if the route is unknown.
                           },
                           transitionsBuilder:
                               (context, animation, secondaryAnimation, child) {
@@ -323,7 +336,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         );
                       }
                     }
-                    print('Error creating user: $e');
                   }
                 },
               ),
@@ -355,8 +367,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ),
-      // const Text('Already User? SignIn Here',Navigator.pushNamed(context, login())),
-      // const Text('Already User? SignIn Here',style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold)),
       GestureDetector(
         onTap: () {
           Navigator.push(

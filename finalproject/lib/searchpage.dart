@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:google_places_flutter/model/prediction.dart';
 
@@ -13,6 +14,7 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
 
   final searchController = TextEditingController();
+  late LatLng picked;
   @override
   void initState() {
     super.initState();
@@ -34,7 +36,10 @@ class _SearchPageState extends State<SearchPage> {
                   Padding(padding: const EdgeInsets.all(16.0), // Adjust the padding as needed
                     child: Align(
                       alignment: Alignment.bottomCenter,
-                      child: ElevatedButton(onPressed:(){ Navigator.of(context).pop(searchController.text);},
+                      child: ElevatedButton(
+                          onPressed:(){if(searchController.text.isEmpty){
+                            Navigator.of(context).pop({'location': searchController.text, 'latLng': const LatLng(0.0,0.0)});}
+                          else{Navigator.of(context).pop({'location': searchController.text, 'latLng': picked});}},
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
                           child: const Text("Search", style:TextStyle(color: Colors.black87))),
                     ),
@@ -74,52 +79,58 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   placesAutoCompleteTextField() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GooglePlaceAutoCompleteTextField(
-        textEditingController: searchController,
-        googleAPIKey: "AIzaSyC0VfkDfuJHQAFttjRzJ8za5ZJRbjkRYq4",
-        inputDecoration: const InputDecoration(
-          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-          filled: true,
-          fillColor: Colors.white,
-          hintText: 'Search Location',
-          contentPadding: EdgeInsets.all(8.0),
+    return
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        // TextField(
+        child:
+        GooglePlaceAutoCompleteTextField(
+          textEditingController: searchController,
+          googleAPIKey: "AIzaSyC0VfkDfuJHQAFttjRzJ8za5ZJRbjkRYq4",
+          inputDecoration: const InputDecoration(
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+            filled: true,
+            fillColor: Colors.white,
+            hintText: 'Search Location',
+            contentPadding: EdgeInsets.all(8.0),
+          ),
+          debounceTime: 200,
+          countries: const ["in", "us"],
+          isLatLngRequired: true,
+          getPlaceDetailWithLatLng: (Prediction prediction){
+            if (prediction.lat != null) {
+              double latitude = double.tryParse(prediction.lat.toString()) ?? 0.0;
+              double longitude = double.tryParse(prediction.lng.toString()) ?? 0.0;
+              picked = LatLng(latitude, longitude);
+              // print("[][][][][][][][][][][][][][][][][][][]]][]][][][][][]picked: ${picked.latitude}, Longitude: ${picked.longitude}");
+            }
+          },
+          itemClick: (Prediction prediction){
+            searchController.text = prediction.description ?? "";
+            searchController.selection = TextSelection.fromPosition(
+                TextPosition(offset: prediction.description?.length ?? 0));
+            FocusScope.of(context).requestFocus(FocusNode());
+          },
+          seperatedBuilder: const Divider(),
+          itemBuilder: (context, index, Prediction prediction) {
+            return Container(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on),
+                  const SizedBox(
+                    width: 7,
+                  ),
+                  Expanded(child: Text(prediction.description??""))
+                ],
+              ),
+            );
+          },
+          isCrossBtnShown: false,
+
+          // default 600 ms ,
         ),
-        debounceTime: 400,
-        countries: const ["in", "us"],
-        isLatLngRequired: false,
-        getPlaceDetailWithLatLng: (Prediction prediction) {
-          print("placeDetails${prediction.lat}");
-        },
-
-        itemClick: (Prediction prediction) {
-
-          searchController.text = prediction.description ?? "";
-          searchController.selection = TextSelection.fromPosition(
-              TextPosition(offset: prediction.description?.length ?? 0));
-        },
-        seperatedBuilder: const Divider(),
-        itemBuilder: (context, index, Prediction prediction) {
-          return Container(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
-                const Icon(Icons.location_on),
-                const SizedBox(
-                  width: 7,
-                ),
-                Expanded(child: Text(prediction.description??""))
-              ],
-            ),
-          );
-        },
-
-        isCrossBtnShown: false,
-
-        // default 600 ms ,
-      ),
-    );
+      );
   }
 }
