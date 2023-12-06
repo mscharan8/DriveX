@@ -1,3 +1,4 @@
+import 'package:finalproject/Tripspage.dart';
 import 'package:finalproject/splashscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ void main() async {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     theme:ThemeData(),
-    home: const Drivepage(),
+    home: const SplashScreen(),
    )
   );
 }

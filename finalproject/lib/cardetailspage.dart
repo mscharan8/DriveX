@@ -1,3 +1,4 @@
+import 'package:finalproject/drivepage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:finalproject/chatscreen.dart';
@@ -155,7 +156,14 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () async {},
+              onPressed: () async {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Drivepage(),
+                  ),
+                );
+              },
               child: const Text('BOOK'),
             ),
           ],

@@ -33,10 +33,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        color: Colors.white,
-        child: Center(
-            child: Image.asset('assets/dx logo.png',
-                height: MediaQuery.of(context).size.height)));
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          "History",
+          style: TextStyle(
+              fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+      ),
+    );
   }
 }
