@@ -21,3 +21,8 @@ Key features:
 3. Camera Integration:
     The app enables users to capture and store photos of rental cars using an internet connection. This feature allows users to record the car's condition for transparency during 
     pickup and drop-off, with the photos being securely stored in the database, accessible from anywhere with an internet connection.
+
+
+
+Application Video
+https://csuchico-my.sharepoint.com/:f:/g/personal/anaheed_csuchico_edu/EiiEuTmZCd9EvPTAQtE0dRkB6BIVJPq2y9y94O5FBgPWMg?e=LKT4G8
