@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geoflutterfire2/geoflutterfire2.dart';
 import 'list.dart';
+import 'minimal.dart';
 import 'carDetail.dart';
 //https://docs.flutter.dev/cookbook/effects/nested-nav
 class Search extends StatefulWidget {
@@ -23,7 +24,7 @@ class Search extends StatefulWidget {
 class SearchState extends State<Search> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _navigatorKey2 = GlobalKey<NavigatorState>();
-  bool _isTapped = false, isSearched = false, _isLoading = true, launched = false;
+  bool _isTapped = false, isSearched = false, _isLoading = true, ignore = false, mount = false, initial = true;
   final  _controller = TextEditingController();
   late Map<String, dynamic> place;
   // final LatLng _searchedPosition = const LatLng(39.7278851, -121.845067);
@@ -36,24 +37,41 @@ class SearchState extends State<Search> {
     _currentPosition = widget.position;
   }
 
-  void _onListSelected(){
+  void _onWaitComplete(){
+    setState(() {
+      mount = !mount;
+    });
+  }
 
-    if(!_isTapped){
-      if(!launched){
-      _navigatorKey2.currentState!.pop();
+  void _waitFirst() async {
+    await Future<dynamic>.delayed(const Duration(milliseconds: 250));
+    if (mounted) {
+        if(!ignore) {
+          setState(() {
+            _isTapped = !_isTapped;
+            _navigatorKey.currentState!.pushNamed('/list');
+          });
+        }
+        else{
+          ignore = !ignore;
+          _onWaitComplete();
+        }
       }
-      setState(() {
-        _isTapped = !_isTapped;
-        _navigatorKey.currentState!.pushNamed('/list');
-      });
+    }
+
+  void _onListSelected(){
+    if(mount){_navigatorKey2.currentState!.pop();_onWaitComplete();}
+    if(!_isTapped){
+      _waitFirst();
     }
     else{
+      _navigatorKey.currentState!.pop();
+      if(isSearched){
+        ignore = !ignore;
+        _waitFirst();
+      }
       setState(() {
         _isTapped = !_isTapped;
-        if(!launched){
-        launched = !launched;
-      }
-        _navigatorKey.currentState!.pop();
       });
     }
   }
@@ -70,11 +88,11 @@ class SearchState extends State<Search> {
         initialRoute: widget.setupPageRoute,
         onGenerateRoute: _onGenerateRoute,
       ),
-        launched ? Container(): Navigator(
+         mount ? Navigator(
           key: _navigatorKey2,
-          initialRoute: '/',
+          initialRoute: isSearched ? '/list' : '/',
           onGenerateRoute: _onGenerateRoute2,
-        )
+        ) : Container()
        ],
        ),
       ),
@@ -85,10 +103,10 @@ class SearchState extends State<Search> {
     if (settings.name == '/') {
       if(isSearched==true){
         page = Googlemap(setupPageRoute: '/', loaded: _isLoading, position: _searchedPosition, searched: isSearched,
-                         onListSelected: _onListSelected);
+                         onListSelected: _onListSelected, onWaitComplete: _onWaitComplete);
       }else{
         page = Googlemap(setupPageRoute: '/', loaded: _isLoading, position: _currentPosition, searched: isSearched,
-                         onListSelected: _onListSelected);}
+                         onListSelected: _onListSelected, onWaitComplete: _onWaitComplete);}
     }
     if (settings.name == '/list') {
       page = const CarListPage();
@@ -124,9 +142,15 @@ class SearchState extends State<Search> {
     );
 
   }
-  Route _onGenerateRoute2(RouteSettings settings) {
+
+
+  Route _onGenerateRoute2(RouteSettings settings){
+
     late Widget page;
     if (settings.name == '/') {
+      page = const MinimalPage();
+    }
+    else{
       page = const CarListPage();
     }
     return PageRouteBuilder(
@@ -134,7 +158,7 @@ class SearchState extends State<Search> {
       settings: settings, // Pass the settings to the PageRouteBuilder
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         const begin = Offset(0.0, 1.0);
-        const end = Offset(0.0,0.5);
+        const end = Offset(0.0,0.61);
         const curve = Curves.easeInOut;
         var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         var offsetAnimation = animation.drive(tween);
@@ -165,6 +189,7 @@ class SearchState extends State<Search> {
               readOnly: true,
               onTap: ()  async {
                 //https://docs.flutter.dev/cookbook/navigation/returning-data
+                  if(mount){_navigatorKey2.currentState!.pop();_onWaitComplete();}
                   place = await Navigator.push(
                   context,
                   PageRouteBuilder(
@@ -189,17 +214,12 @@ class SearchState extends State<Search> {
                     if(_controller.text.isNotEmpty){
                       setState(() {
                         isSearched = true;
-                        launched = !launched;
                         _searchedPosition = place['latLng'];
                         _navigatorKey.currentState!.pushNamed('/');
                       });
                     }else{setState(() {
                       isSearched = false;
-                      if(launched){
-                         launched = !launched;
-                        }
                       _navigatorKey.currentState!.pushNamed('/');
-                      // _navigatorKey2.currentState!.pushNamed('/');
                     });}
                 }
               }
@@ -224,13 +244,14 @@ class SearchState extends State<Search> {
 //https://codelabs.developers.google.com/codelabs/google-maps-in-flutter#0
 class Googlemap extends StatefulWidget {
   const Googlemap({super.key, required this.setupPageRoute, required this.loaded, required this.position,
-                   required this.searched, required this.onListSelected,
+                   required this.searched, required this.onListSelected,required this.onWaitComplete
   });
 
   final String setupPageRoute;
   final void Function() onListSelected;
   final bool loaded, searched ;
   final LatLng position;
+  final VoidCallback onWaitComplete;
 
   @override
   State<Googlemap> createState() => Googlemapstate();
@@ -251,6 +272,15 @@ class Googlemapstate extends State<Googlemap>{
     _isSearched = widget.searched;
     _isLoading = widget.loaded;
     _currentPosition = widget.position;
+    _startWaiting();
+  }
+
+  void _startWaiting() async {
+    await Future<dynamic>.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      widget.onWaitComplete();
+    }
   }
 
 //https://pub.dev/packages/geoflutterfire2 and GPT

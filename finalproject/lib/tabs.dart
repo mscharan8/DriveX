@@ -58,39 +58,45 @@ class _HomePage extends State<HomePage> {
               ],
             ),
           ),
-          bottomNavigationBar: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            onTap: (int index) { _selectTab(pageKeys[index], index); },
-            currentIndex: _selectedIndex,
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: Icon(Icons.search),
-                label: 'Search',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.key),
-                label: 'Drive',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.chat),
-                label: 'Inbox',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_today),
-                label: 'Trips',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.account_circle_outlined),
-                label: 'Profile',
-              ),
-            ],
-            selectedItemColor: Colors.pink,
-            unselectedItemColor : Colors.blueGrey,
-            showUnselectedLabels: true,
-            elevation: 0.5,
-            // onTap: _onItemTapped,
-          )
-      ),
+
+
+        bottomNavigationBar: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+            const Divider(height: 1, color: Colors.grey),
+               BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              onTap: (int index) { _selectTab(pageKeys[index], index); },
+              currentIndex: _selectedIndex,
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.search),
+                  label: 'Search',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.key),
+                  label: 'Drive',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.chat),
+                  label: 'Inbox',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_today),
+                  label: 'Trips',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.account_circle_outlined),
+                  label: 'Profile',
+                ),
+              ],
+              selectedItemColor: Colors.pink,
+              unselectedItemColor : Colors.blueGrey,
+              showUnselectedLabels: true,
+              elevation: 0.5,
+              // onTap: _onItemTapped,
+            )])
+      )
     );
   }
 
